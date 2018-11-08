@@ -2,24 +2,22 @@ import React, {Component} from 'react';
 import './App.css';
 import * as tf from '@tensorflow/tfjs';
 
-import {createModel, getPokemon, plotLosses, POKEMON_DATA, POKEMON_TYPES} from "./tensorflow.model";
-import embed from "vega-embed";
+import {
+    PokemonTypeModel
+} from "./tensorflow.model";
 import pokemon from './pokemon'
 import _ from "lodash";
 import ResultTable from "./ResultTable";
 import Predict from "./Predict";
 import ModelStatus from "./ModelStatus";
 import PredictionResults from "./PredictionResults";
-import {Link} from "react-router-dom";
-import pokemonImg from "./pokemon.jpg";
-import AppRouter from "./Router";
 
 window.tf = tf;
 
 
 export function getName(_row) {
 
-    const found = POKEMON_DATA.find(pokemon => {
+    const found = model.data.POKEMON_DATA.find(pokemon => {
 
         return pokemon[1] == _row[0] && pokemon[2] == _row[1]
     });
@@ -33,21 +31,19 @@ export function getName(_row) {
 
 const samplePokemon = _.sample(pokemon);
 
+const model = new PokemonTypeModel();
 
 class App extends Component {
 
-
     state = {
-        model: null,
+        model: model,
         resultData: [],
         training: false,
         params: {
-            epochs: 50,
-            learningRate: 0.0005,
+            ...model.params,
             ...samplePokemon
-
         },
-        data: pokemon,
+        data: model.data.pokemon,
         predictedTypes: [],
 
     };
@@ -58,82 +54,27 @@ class App extends Component {
         this.run = this.run.bind(this);
         this.save = this.save.bind(this);
         this.loadRandomPokemon = this.loadRandomPokemon.bind(this);
-        this.createModelIfNeeded = this.createModelIfNeeded.bind(this);
         this.load = this.load.bind(this);
-        this.train = this.train.bind(this);
         this.predict = this.predict.bind(this);
         this.handleChange = this.handleChange.bind(this);
-        this.trainModel = this.trainModel.bind(this);
-        this.evaluateModelOnTestData = this.evaluateModelOnTestData.bind(this);
     }
 
-    componentDidMount() {
+    async load() {
 
-    }
-
-    /**
-     * Plot new accuracy values.
-     *
-     * @param lossValues An `Array` of data to append to.
-     * @param epoch Training epoch number.
-     * @param newTrainLoss The new training accuracy, as a single `Number`.
-     * @param newValidationLoss The new validation accuracy, as a single `Number`.
-     */
-    static plotAccuracies(
-        accuracyValues, epoch, newTrainAccuracy, newValidationAccuracy) {
-        accuracyValues.push(
-            {epoch, 'accuracy': newTrainAccuracy, 'set': 'train'});
-        accuracyValues.push(
-            {epoch, 'accuracy': newValidationAccuracy, 'set': 'validation'});
-        embed(
-            '#accuracyCanvas', {
-                '$schema': 'https://vega.github.io/schema/vega-lite/v2.json',
-                'data': {'values': accuracyValues},
-                'mark': 'line',
-                'encoding': {
-                    'x': {'field': 'epoch', 'type': 'ordinal'},
-                    'y': {'field': 'accuracy', 'type': 'quantitative'},
-                    'color': {'field': 'set', 'type': 'nominal'}
+        try {
+            const _model = await model.load();
+            this.setState({
+                ...this.state,
+                model: {
+                    ...this.state.model,
+                    ...model,
+                    model: _model.model,
                 },
-                'width': 500
-            },
-            {});
-    }
+            }, () => console.log('loaded'))
+        } catch (e) {
 
-
-    /**
-     * Train a `tf.Model` to recognize Iris flower type.
-     *
-     * @param xTrain Training feature data, a `tf.Tensor` of shape
-     *   [numTrainExamples, 4]. The second dimension include the features
-     *   petal length, petalwidth, sepal length and sepal width.
-     * @param yTrain One-hot training labels, a `tf.Tensor` of shape
-     *   [numTrainExamples, 3].
-     * @param xTest Test feature data, a `tf.Tensor` of shape [numTestExamples, 4].
-     * @param yTest One-hot test labels, a `tf.Tensor` of shape
-     *   [numTestExamples, 3].
-     * @returns The trained `tf.Model` instance.
-     */
-    async trainModel(model, xTrain, yTrain, xTest, yTest) {
-
-
-        return await this.train(model, xTrain, yTrain, xTest, yTest);
-    }
-
-    createModelIfNeeded(xTrain) {
-
-        let {model} = this.state;
-        if (!model) {
-
-            model = createModel(xTrain);
-
+            alert(e);
         }
-
-        model.summary();
-
-        return model;
-
-
     }
 
 
@@ -143,36 +84,22 @@ class App extends Component {
      * @param this.state.model The instance of `tf.Model` to run the inference with.
      */
 
-
-
-
     async run() {
-
-
-        const [xTrain, yTrain, xTest, yTest] = getPokemon(0.1);
-
-        const model = this.createModelIfNeeded(xTrain);
-
+        model.createModel();
         this.setState({
             ...this.state,
-            model,
+            model: {
+                ...this.state.model,
+                ...model,
+                model: model.model,
+            },
             training: true,
             resultData: []
         }, async () => {
-
-
-            const _model = await this.trainModel(model, xTrain, yTrain, xTest, yTest);
-
-            window.model = _model;
-
-            window.xTest = xTest;
-            window.yTest = yTest;
-
-            const resultData = this.evaluateModelOnTestData(_model, xTest, yTest);
-
+            await model.train(this.state.params);
+            const resultData = model.evaluateModelOnTestData();
             this.setState({
                 ...this.state,
-                model: _model,
                 training: false,
                 resultData,
             });
@@ -180,109 +107,15 @@ class App extends Component {
     }
 
 
-    renderEvaluateTable(xData, yTrue, yPred, logits) {
-
-        const rows = _.chunk(xData, 7);
-
-        const data = [];
-
-        for (let i = 0; i < rows.length; i++) {
-
-            const row = rows[i];
-
-            const name = getName(row);
-
-            const type = POKEMON_TYPES[yTrue[i]];
-
-            const pred = POKEMON_TYPES[yPred[i]];
-            const exampleLogits = logits.slice(i * POKEMON_TYPES.length, (i + 1) * POKEMON_TYPES.length);
-
-            const top5 = tf.topk(exampleLogits, 5);
-            const _data = top5.indices.dataSync();
-
-            const types = Array.from(_data).map(item => POKEMON_TYPES[item]);
-
-            const strings = types.join(', ');
-
-            const span = strings;
-
-            data.push({
-                name,
-                type,
-                pred,
-                span,
-                types,
-                _data,
-            })
-
-        }
-        return {
-            data,
-        }
-
-    }
-
-
-    evaluateModelOnTestData(model, xTest, yTest) {
-
-        return tf.tidy(() => {
-            const xData = xTest.dataSync();
-            const yTrue = yTest.argMax(-1).dataSync();
-            const predictOut = model.predict(xTest);
-            const yPred = predictOut.argMax(-1);
-
-            const logits = predictOut.dataSync();
-
-
-            const result = this.renderEvaluateTable(
-                xData, yTrue, yPred.dataSync(), logits);
-
-
-            const resultData = result.data.map(d => {
-
-                const foundP = this.state.data.find(_d => _d.Name === d.name);
-
-                if (foundP) {
-
-                    return Object.assign({}, foundP, d);
-
-                }
-
-                return d;
-            });
-
-            return resultData;
-
-            // calculateAndDrawConfusionMatrix(model, xTest, yTest);
-        });
-
-
-        // await predictOnManualInput(model);
-    }
-
-
     async save() {
-
 
         try {
 
-            // localstorage
-
-            if (this.state.model == null) {
-
-                throw new Error('Invalid Request');
-            }
-            const saveResults = await this.state.model.save(`indexeddb://my-model-1`);
-
-            window.alert('saved');
+            return await model.save();
         } catch (e) {
 
-            console.error(e);
-
-            window.alert("Error Saving Model")
+            window.alert(e);
         }
-
-
     }
 
     handleChange({target: {value, name}}) {
@@ -299,7 +132,7 @@ class App extends Component {
     loadRandomPokemon() {
 
 
-        const randPoke = _.sample(pokemon);
+        const randPoke = _.sample(model.data.pokemon);
 
         this.setState({
             ...this.state,
@@ -313,118 +146,25 @@ class App extends Component {
 
     predict() {
 
-        const {model, params: {Total, HP, Attack, Defense, Speed, Sp_Atk, Sp_Def}} = this.state;
-
-
-        if (!model) {
+        if (!model.model) {
 
             window.alert('Load Model first');
 
             return false;
         }
-        const _arr = [Total, HP, Attack, Defense, Speed, Sp_Atk, Sp_Def];
-
-        const tensor = tf.tensor2d(_arr, [1, 7], 'float32');
-        const prediction = model.predict(tensor);
-
-        const top5 = tf.topk(prediction, 5);
-        const _data = top5.indices.dataSync();
-        const types = Array.from(_data).map(item => POKEMON_TYPES[item]);
+        const predictedTypes = model.predict(this.state.params);
 
         this.setState({
             ...this.state,
-            predictedTypes: types,
-        });
-    }
+            predictedTypes,
+        })
 
-
-    /*
-    bad results
-     */
-    async _train(model, xTrain, yTrain, xTest, yTest) {
-
-        const {params} = this.state;
-
-        const optimizer = tf.train.adam(params.learningRate);
-        model.compile({
-            optimizer: optimizer,
-            loss: 'categoricalCrossentropy',
-            metrics: ['accuracy'],
-        });
-
-        const lossValues = [];
-        const accuracyValues = [];
-        // Call `model.fit` to train the model.
-        return await model.fit(xTrain, yTrain, {
-            epochs: params.epochs,
-            validationData: [xTest, yTest],
-            callbacks: {
-                onEpochEnd: async (epoch, logs) => {
-                    // Plot the loss and accuracy values at the end of every training epoch.
-                    plotLosses(lossValues, epoch, logs.loss, logs.val_loss);
-                    App.plotAccuracies(accuracyValues, epoch, logs.acc, logs.val_acc);
-                },
-            }
-        });
-
-
-    }
-
-
-    async train(model, xTrain, yTrain, xTest, yTest) {
-
-        const {params} = this.state;
-
-        const optimizer = tf.train.adam(params.learningRate);
-        const lossValues = [];
-
-        const returnCost = true;
-
-
-        for (let i = 0; i < params.epochs; i++) {
-            const cost = optimizer.minimize(() => {
-                const predictions = model.predict(xTrain);
-                return tf.losses.softmaxCrossEntropy(
-                    yTrain.asType('float32'),
-                    predictions.asType('float32')
-                ).mean();
-            }, returnCost);
-
-            const trainLoss = tf.losses.softmaxCrossEntropy(
-                yTest.asType('float32'),
-                model.predict(xTest).asType('float32')
-            ).mean();
-
-            plotLosses(lossValues, i, cost.dataSync(), trainLoss.dataSync());
-
-            await tf.nextFrame();
-        }
-
-        return model;
-
-
-    };
-
-
-    async load() {
-
-        try {
-
-
-            const loadedModel = await tf.loadModel('indexeddb://my-model-1');
-
-            this.setState({model: loadedModel});
-
-        } catch (e) {
-
-            window.alert('Error loading model')
-        }
     }
 
 
     render() {
 
-        const {params, training, resultData, model, predictedTypes} = this.state;
+        const {params, training, resultData, model: {model}, predictedTypes} = this.state;
 
         return (
             <div>
