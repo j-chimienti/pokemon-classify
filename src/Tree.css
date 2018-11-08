@@ -1,0 +1,11 @@
+.node circle {
+    fill: #fff;
+    stroke: #99ccff;
+    stroke-width: 3px;
+}
+
+.tooltip {
+
+    width: 100px;
+    height: 100px;
+}

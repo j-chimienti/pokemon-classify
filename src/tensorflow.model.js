@@ -1,7 +1,13 @@
 /* eslint-disable arrow-parens */
+import embed from "vega-embed";
+
 const tf = require('@tensorflow/tfjs');
 const _uniq = require('lodash.uniq');
-const pokemond = require('../pokemon');
+const pokemond = require('./pokemon');
+
+export const POKEMON_DATA = pokemond.map(mapJsonToArray);
+
+export const POKEMON_TYPES = _uniq(POKEMON_DATA.map(item => item[8]));
 
 function mapJsonToArray(p) {
 
@@ -25,9 +31,50 @@ function mapJsonToArray(p) {
 
 }
 
-export const POKEMON_DATA = pokemond.map(mapJsonToArray);
 
-export const POKEMON_TYPES = _uniq(POKEMON_DATA.map(item => item[8]));
+export function createModel(xTrain) {
+
+
+    let model;
+    model = tf.sequential();
+
+    model.add(tf.layers.dense(
+        {units: 256, activation: 'relu', inputShape: [xTrain.shape[1]]}));
+
+    model.add(
+        tf.layers.dense(
+            {units: 256, activation: 'relu'}
+        )
+    );
+
+    model.add(tf.layers.dense({units: POKEMON_TYPES.length}));
+
+    return model;
+
+
+}
+
+
+
+export function plotLosses(lossValues, epoch, newTrainLoss, newValidationLoss) {
+    lossValues.push({epoch, 'loss': newTrainLoss, 'set': 'train'});
+    lossValues.push(
+        {epoch, 'loss': newValidationLoss, 'set': 'validation'});
+    embed(
+        '#lossCanvas', {
+            '$schema': 'https://vega.github.io/schema/vega-lite/v2.json',
+            'data': {'values': lossValues},
+            'mark': 'line',
+            'encoding': {
+                'x': {'field': 'epoch', 'type': 'ordinal'},
+                'y': {'field': 'loss', 'type': 'quantitative'},
+                'color': {'field': 'set', 'type': 'nominal'}
+            },
+            'width': 500
+        },
+        {});
+}
+
 
 export function getPokemon(testSplit = 0.2) {
 

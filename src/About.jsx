@@ -1,77 +1,80 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Tree from "./Tree";
-import * as tf from "@tensorflow/tfjs";
-import {POKEMON_TYPES} from "./tf/data";
 
 
 function About(props) {
     return (
-        <div className={'container-fluid'}>
+        <div className={'container'}>
             <h2>About</h2>
 
-            <Tree/>
+            <div className={'row'}>
+                <div className={'row'}>
+                    <div>
+                        <div>
+                            Sequential model with 3 fully connected layers
+                            <ol>
+                                <li>
+                                    <b>
+                                        First Layer
 
-            <p>
-                <code>
-                    {`model = tf.sequential();`}
-                </code>
-            </p>
+                                    </b>
 
-            <p>
-                The model is a sequential model with each layer
-                being stacked onto each other
-            </p>
-            <p>
-                <code>
-                    {`model.add(tf.layers.dense(
-                        {units: 256, activation: 'relu', inputShape: [18]}
-                    ));`}
-                </code>
-            </p>
-            <p>
-                The first layer is the input data, with shape of 18 parameters, and
-                expanded into 256 units
-            </p>
+                                    <ul>
+                                        <li>
+                                            Input data: 18 units
+                                        </li>
+                                        <li>
+                                            Units: 256
 
-            <p>
-                <code>
-                    {
-                        `model.add(tf.layers.dense({units: 256, activation: 'relu'}))`
-                    }
-                </code>
-            </p>
+                                        </li>
+                                        <li>
+                                            Activation: Relu
+                                        </li>
+                                    </ul>
 
-            <p>
-                The second layer has same units as first
-            </p>
+                                </li>
+                                <li>
 
-            <p>
-                <code>
-                    {`model.add(tf.layers.dense({units: 18}));`}
-                </code>
-            </p>
+                                    <b>
+                                        Second Layer
+                                    </b>
+                                    <ul>
+                                        <li>
+                                            Units: 256
 
-            <p>
-                Last layer is paired down to 18 units so we can guess the pokemon class.
-            </p>
+                                        </li>
+                                        <li>
+                                            Activation: Relu
+                                        </li>
+                                    </ul>
 
-            <h4>Model Training</h4>
+                                </li>
+                                <li>
 
-            <p>
-                <code>
-                    {`
-                        const cost = optimizer.minimize(() => {\n
-                        const predictions = model.predict(xTrain);\n
-                        const loss = tf.losses.softmaxCrossEntropy(\n
-                            yTrain.asType('float32'),\n
-                            predictions.asType('float32')\n
-                        ).mean();\n
-                        return loss;\n
-                    }, true);`}
-                </code>
-            </p>
+                                    <b>
+                                        Third layer
+                                    </b>
+                                    <ul>
+                                        <li>
+                                            Units: 18
+                                            <small>
+                                                {' reduced to 18 pokemon types'}
+                                            </small>
 
+                                        </li>
+                                        <li>
+                                            Activation: none
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <Tree/>
+                </div>
+            </div>
 
         </div>
     );
