@@ -1,16 +1,16 @@
 {
   "main.css": "/pokemon-classify/static/css/main.100f7fc4.chunk.css",
-  "main.js": "/pokemon-classify/static/js/main.0e3598ee.chunk.js",
-  "main.js.map": "/pokemon-classify/static/js/main.0e3598ee.chunk.js.map",
+  "main.js": "/pokemon-classify/static/js/main.c216b264.chunk.js",
+  "main.js.map": "/pokemon-classify/static/js/main.c216b264.chunk.js.map",
   "static/css/1.67174783.chunk.css": "/pokemon-classify/static/css/1.67174783.chunk.css",
-  "static/js/1.bfa67fdc.chunk.js": "/pokemon-classify/static/js/1.bfa67fdc.chunk.js",
-  "static/js/1.bfa67fdc.chunk.js.map": "/pokemon-classify/static/js/1.bfa67fdc.chunk.js.map",
+  "static/js/1.f45a2c4b.chunk.js": "/pokemon-classify/static/js/1.f45a2c4b.chunk.js",
+  "static/js/1.f45a2c4b.chunk.js.map": "/pokemon-classify/static/js/1.f45a2c4b.chunk.js.map",
   "runtime~main.js": "/pokemon-classify/static/js/runtime~main.ed55a3b5.js",
   "runtime~main.js.map": "/pokemon-classify/static/js/runtime~main.ed55a3b5.js.map",
   "static/css/1.67174783.chunk.css.map": "/pokemon-classify/static/css/1.67174783.chunk.css.map",
   "static/media/pokemon.jpg": "/pokemon-classify/static/media/pokemon.a4f594f6.jpg",
   "static/css/main.100f7fc4.chunk.css.map": "/pokemon-classify/static/css/main.100f7fc4.chunk.css.map",
   "index.html": "/pokemon-classify/index.html",
-  "precache-manifest.3c531dbe2d6db62ebf0799cc57636b6e.js": "/pokemon-classify/precache-manifest.3c531dbe2d6db62ebf0799cc57636b6e.js",
+  "precache-manifest.c68efcce4a1abaf931e1b061a9013227.js": "/pokemon-classify/precache-manifest.c68efcce4a1abaf931e1b061a9013227.js",
   "service-worker.js": "/pokemon-classify/service-worker.js"
 }
