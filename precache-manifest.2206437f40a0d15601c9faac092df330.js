@@ -8,15 +8,15 @@ self.__precacheManifest = [
     "url": "/pokemon-classify/static/js/runtime~main.ed55a3b5.js"
   },
   {
-    "revision": "8d92f22168bf34dd7562",
-    "url": "/pokemon-classify/static/js/main.8d92f221.chunk.js"
+    "revision": "ba23579e2a7de0a7ba8d",
+    "url": "/pokemon-classify/static/js/main.ba23579e.chunk.js"
   },
   {
     "revision": "ddfd8ad3487307ae7ef7",
     "url": "/pokemon-classify/static/js/1.ddfd8ad3.chunk.js"
   },
   {
-    "revision": "8d92f22168bf34dd7562",
+    "revision": "ba23579e2a7de0a7ba8d",
     "url": "/pokemon-classify/static/css/main.f62d34e2.chunk.css"
   },
   {
@@ -24,7 +24,7 @@ self.__precacheManifest = [
     "url": "/pokemon-classify/static/css/1.c3eb2327.chunk.css"
   },
   {
-    "revision": "f936f043f7c947ac6589b330e0ae008d",
+    "revision": "6161b1e6f52599b57a5d5edd946e4874",
     "url": "/pokemon-classify/index.html"
   }
 ];
