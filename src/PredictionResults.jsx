@@ -8,15 +8,19 @@ function PredictionResults({predictions = [], pokemonType}) {
         return null;
     }
     return (
-        <div
+        <div className={'my-2'}
         >
             <h4>Predicted Types</h4>
             <ol className={'list-group'}>
                 {predictions.map((prediction, i) => {
 
+                    const type = pokemonType.split('\n')[0];
+
+                    const same = type === prediction;
+
                     return (
                         <li key={prediction}
-                            className={pokemonType == prediction ? 'list-group-item active' : 'list-group-item'}
+                            className={same ? 'list-group-item active' : 'list-group-item'}
                         >
                             {prediction}
                         </li>

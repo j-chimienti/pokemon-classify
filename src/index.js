@@ -6,6 +6,8 @@ import 'jquery/dist/jquery.min'
 import 'popper.js/dist/popper.min'
 import 'bootstrap/dist/js/bootstrap.min'
 import AppRouter from "./Router";
+import * as tf from "@tensorflow/tfjs";
+window.tf = tf;
 
 ReactDOM.render(<AppRouter/>, document.getElementById('root'));
 

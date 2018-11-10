@@ -103,33 +103,9 @@ function ResultTable({data}) {
     ];
 
 
-    const correctPredictions = data.filter(d => d.pred === d.type).length;
-    const top5Pred = data.filter(({types, type}) => types.includes(type)).length;
-    const predictions = data.length;
+
     return (
-        <div>
 
-
-            <table className={'table table-condensed'}>
-                <thead>
-                <tr>
-                    <th className={'text-right'}>
-                        Correct
-                    </th>
-                    <th className={'text-right'}>
-                        top 5
-                    </th>
-                </tr>
-                </thead>
-                <tr>
-                    <td className={'mono text-right'}>
-                        {Math.floor((correctPredictions / predictions) * 100) + '%'}
-                    </td>
-                    <td className={'mono text-right'}>
-                        {Math.floor((top5Pred / predictions) * 100) + '%'}
-                    </td>
-                </tr>
-            </table>
 
 
             <ReactTable
@@ -138,7 +114,6 @@ function ResultTable({data}) {
                 columns={columns}
                 data={data}
             />
-        </div>
     );
 }
 

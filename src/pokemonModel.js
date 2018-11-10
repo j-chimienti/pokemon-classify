@@ -1,15 +1,13 @@
 /* eslint-disable arrow-parens */
-import embed from "vega-embed";
 import _ from "lodash";
-import {getName} from "./App";
+import {UI} from "./vegaEmbedGraph";
 
 const tf = require('@tensorflow/tfjs');
-const _uniq = require('lodash.uniq');
-const pokemond = require('./pokemon');
+const pokemon = require('./pokemon');
 
-const POKEMON_DATA = pokemond.map(mapJsonToArray);
+const POKEMON_DATA = pokemon.map(mapJsonToArray);
 
-const POKEMON_TYPES = _uniq(POKEMON_DATA.map(item => item[8]));
+const POKEMON_TYPES = _.uniq(POKEMON_DATA.map(item => item[8]));
 
 function mapJsonToArray(p) {
 
@@ -33,12 +31,26 @@ function mapJsonToArray(p) {
 
 }
 
+function getName(_row) {
+
+    const found = POKEMON_DATA.find(pokemon => {
+
+        return pokemon[1] == _row[0] && pokemon[2] == _row[1]
+    });
+
+    if (found) {
+        return found[0]
+    }
+    return 'n/a';
+}
+
+
 class PokemonData {
 
 
     constructor(testSplit = 0.1) {
 
-        this.pokemon = pokemond;
+        this.pokemon = pokemon;
         this.POKEMON_DATA = POKEMON_DATA;
         this.POKEMON_TYPES = POKEMON_TYPES;
 
@@ -50,7 +62,7 @@ class PokemonData {
         this.yTest = yTest;
     }
 
-    getPokemon(testSplit = 0.2) {
+    getPokemon(testSplit) {
 
 
         return tf.tidy(() => {
@@ -81,7 +93,7 @@ class PokemonData {
 
             for (let i = 0; i < POKEMON_TYPES.length; ++i) {
                 const [xTrain, yTrain, xTest, yTest] =
-                    this.convertToTensors(dataByClass[i], targetsByClass[i], testSplit);
+                    PokemonData.convertToTensors(dataByClass[i], targetsByClass[i], testSplit);
                 xTrains.push(xTrain);
                 yTrains.push(yTrain);
                 xTests.push(xTest);
@@ -114,7 +126,7 @@ class PokemonData {
      *   - test data as `tf.Tensor` of shape [numTestExamples, 4].
      *   - test one-hot labels as a `tf.Tensor` of shape [numTestExamples, 3]
      */
-    convertToTensors(data, targets, testSplit) {
+    static convertToTensors(data, targets, testSplit) {
         const numExamples = data.length;
         if (numExamples !== targets.length) {
             throw new Error('data and split have different numbers of examples');
@@ -158,59 +170,6 @@ class PokemonData {
 
 }
 
-class UI {
-
-    /**
-     * Plot new accuracy values.
-     *
-     * @param lossValues An `Array` of data to append to.
-     * @param epoch Training epoch number.
-     * @param newTrainLoss The new training accuracy, as a single `Number`.
-     * @param newValidationLoss The new validation accuracy, as a single `Number`.
-     */
-    static plotAccuracies(
-        accuracyValues, epoch, newTrainAccuracy, newValidationAccuracy) {
-        accuracyValues.push(
-            {epoch, 'accuracy': newTrainAccuracy, 'set': 'train'});
-        accuracyValues.push(
-            {epoch, 'accuracy': newValidationAccuracy, 'set': 'validation'});
-        embed(
-            '#accuracyCanvas', {
-                '$schema': 'https://vega.github.io/schema/vega-lite/v2.json',
-                'data': {'values': accuracyValues},
-                'mark': 'line',
-                'encoding': {
-                    'x': {'field': 'epoch', 'type': 'ordinal'},
-                    'y': {'field': 'accuracy', 'type': 'quantitative'},
-                    'color': {'field': 'set', 'type': 'nominal'}
-                },
-                'width': 500
-            },
-            {});
-    }
-
-    static plotLosses(lossValues, epoch, newTrainLoss, newValidationLoss) {
-        lossValues.push({epoch, 'loss': newTrainLoss, 'set': 'train'});
-        lossValues.push(
-            {epoch, 'loss': newValidationLoss, 'set': 'validation'});
-        embed(
-            '#lossCanvas', {
-                '$schema': 'https://vega.github.io/schema/vega-lite/v2.json',
-                'data': {'values': lossValues},
-                'mark': 'line',
-                'encoding': {
-                    'x': {'field': 'epoch', 'type': 'ordinal'},
-                    'y': {'field': 'loss', 'type': 'quantitative'},
-                    'color': {'field': 'set', 'type': 'nominal'}
-                },
-                'width': 500
-            },
-            {});
-    }
-
-
-}
-
 class PokemonModel {
 
     params = {
@@ -222,8 +181,22 @@ class PokemonModel {
 
     constructor() {
 
-        this.data = new PokemonData();
+        this.generateData();
 
+    }
+
+    generateData() {
+
+        this.data = new PokemonData();
+    }
+
+    generateNewData() {
+
+        this.data.xTest.dispose();
+        this.data.yTest.dispose();
+        this.data.xTrain.dispose();
+        this.data.yTrain.dispose();
+        this.generateData();
     }
 
 
@@ -271,6 +244,11 @@ class PokemonModel {
 
     async train(params) {
 
+        if (!this.model) {
+
+            this.createModel();
+        }
+
         const {xTrain, yTrain, xTest, yTest} = this.data;
         const optimizer = tf.train.adam(params.learningRate);
         const lossValues = [];
@@ -303,13 +281,13 @@ class PokemonModel {
 
 }
 
+
 export class PokemonTypeModel extends PokemonModel {
 
 
     constructor() {
 
         super();
-        this.createModel();
     }
 
     renderEvaluateTable(xData, yTrue, yPred, logits) {

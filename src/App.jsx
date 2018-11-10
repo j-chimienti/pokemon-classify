@@ -1,62 +1,44 @@
 import React, {Component} from 'react';
 import './App.css';
-import * as tf from '@tensorflow/tfjs';
-
-import {
-    PokemonTypeModel
-} from "./tensorflow.model";
-import pokemon from './pokemon'
-import _ from "lodash";
+import {sample} from "lodash";
 import ResultTable from "./ResultTable";
 import Predict from "./Predict";
 import ModelStatus from "./ModelStatus";
 import PredictionResults from "./PredictionResults";
 
-window.tf = tf;
 
+import {PokemonTypeModel} from "./pokemonModel";
+import Header from "./Header";
 
-export function getName(_row) {
-
-    const found = model.data.POKEMON_DATA.find(pokemon => {
-
-        return pokemon[1] == _row[0] && pokemon[2] == _row[1]
-    });
-
-    if (found) {
-        return found[0]
-    }
-    return 'n/a';
-}
-
-
-const samplePokemon = _.sample(pokemon);
-
-const model = new PokemonTypeModel();
+let model;
 
 class App extends Component {
-
-    state = {
-        model: model,
-        resultData: [],
-        training: false,
-        params: {
-            ...model.params,
-            ...samplePokemon
-        },
-        data: model.data.pokemon,
-        predictedTypes: [],
-
-    };
 
     constructor(props) {
 
         super();
         this.run = this.run.bind(this);
         this.save = this.save.bind(this);
+        this.predictTestData = this.predictTestData.bind(this);
         this.loadRandomPokemon = this.loadRandomPokemon.bind(this);
         this.load = this.load.bind(this);
         this.predict = this.predict.bind(this);
         this.handleChange = this.handleChange.bind(this);
+
+
+        model = new PokemonTypeModel();
+        const samplePokemon = sample(model.data.pokemon);
+        this.state = {
+            resultData: [],
+            training: false,
+            predictedTypes: [],
+            params: {
+                ...model.params,
+                ...samplePokemon
+            }
+
+        };
+
     }
 
     async load() {
@@ -70,7 +52,7 @@ class App extends Component {
                     ...model,
                     model: _model.model,
                 },
-            }, () => console.log('loaded'))
+            })
         } catch (e) {
 
             alert(e);
@@ -88,11 +70,6 @@ class App extends Component {
         model.createModel();
         this.setState({
             ...this.state,
-            model: {
-                ...this.state.model,
-                ...model,
-                model: model.model,
-            },
             training: true,
             resultData: []
         }, async () => {
@@ -107,11 +84,27 @@ class App extends Component {
     }
 
 
+    async predictTestData() {
+
+        model.generateNewData();
+        const resultData = model.evaluateModelOnTestData();
+
+        this.setState({
+            ...this.state,
+            resultData
+        })
+    }
+
+
     async save() {
 
         try {
 
-            return await model.save();
+            await model.save();
+
+            window.alert('model saved');
+
+            return true;
         } catch (e) {
 
             window.alert(e);
@@ -132,7 +125,7 @@ class App extends Component {
     loadRandomPokemon() {
 
 
-        const randPoke = _.sample(model.data.pokemon);
+        const randPoke = sample(model.data.pokemon);
 
         this.setState({
             ...this.state,
@@ -164,33 +157,51 @@ class App extends Component {
 
     render() {
 
-        const {params, training, resultData, model: {model}, predictedTypes} = this.state;
+        const {params, training, resultData, predictedTypes} = this.state;
+
+        const correctPredictions = resultData.filter(d => d.pred === d.type).length;
+        const top5Pred = resultData.filter(({types, type}) => types.includes(type)).length;
+        const predictions = resultData.length;
+
+        const correctPredictionsPercent = Math.floor((correctPredictions / predictions) * 100);
+        const top5PredictionsPercent = Math.floor((top5Pred / predictions) * 100);
 
         return (
-            <div>
+            <div className={'container'}>
+                <Header/>
 
-                <div className={'container-fluid'}>
+                <div className={'row'}>
 
-
-                    <div className={'row'}>
-
-                        <div className={'col-md-3'}>
-
-                            <div className={'row'}>
-                                <ModelStatus model={model}/>
-                            </div>
-
+                    <div className={'col-xs-6'}>
+                        <div className={'row'}>
+                            <button
+                                disabled={!model.model || training}
+                                type={'button'}
+                                onClick={() => this.save()}
+                                className="btn btn-secondary m-2"
+                                id="save-model">save model
+                            </button>
+                            <button
+                                disabled={training}
+                                type={'button'}
+                                onClick={() => this.load()}
+                                className="btn btn-secondary m-2"
+                                id="load-btn">load model
+                            </button>
+                        </div>
+                        <div className={'row'}>
                             <form
-                                className={'my-3 py-3'}
+                                className={'col-xs-6 my-3 py-3'}
                                 onSubmit={(e) => {
                                     e.preventDefault();
                                     this.run();
                                 }}
                             >
-                                <h5>
-                                    Model Parameters
+                                <h3 className={'section-title'}>
+                                    Training Parameters
 
-                                </h5>
+                                </h3>
+
 
                                 <div className="form-group">
                                     <label htmlFor="train-epochs">Train Epochs:</label>
@@ -202,7 +213,7 @@ class App extends Component {
                                         })}
                                         min={0}
                                         step={1}
-                                        className="form-control"
+                                        className="form-control-sm form-number"
                                         id="train-epochs"
                                         type="number" value={params.epochs}
                                     />
@@ -215,7 +226,8 @@ class App extends Component {
                                             params: {...params, learningRate: e.target.value}
                                         })}
 
-                                        className="form-control"
+                                        width={200}
+                                        className="form-control-sm form-number"
                                         id="learning-rate"
                                         type="number"
                                         value={params.learningRate}
@@ -225,91 +237,86 @@ class App extends Component {
                                     />
                                 </div>
 
-                                <div className={'form-group'}>
+                                <div className={'row py-3'}>
                                     <button
                                         type={'submit'}
                                         disabled={training}
-                                        className="btn btn-primary"
+                                        className="btn btn-primary m-2"
                                         id="train-from-scratch"
                                     >
-                                        Train model
+                                        Train
+                                    </button>
+                                    <button type={'button'} className={'btn btn-primary m-2'}
+                                            onClick={() => {
+
+                                                this.predictTestData();
+                                            }}
+                                            disabled={!model.model}
+                                    >
+                                        Test
                                     </button>
                                 </div>
 
-                                <div className={'form-group'}>
-                                    <div className={'btn-group-sm'}>
-                                        <button
-                                            disabled={!model || training}
-                                            type={'button'}
-                                            onClick={() => this.save()}
-                                            className="btn btn-secondary"
-                                            id="save-model">save model
-                                        </button>
-                                        <button
-                                            disabled={training}
-                                            type={'button'}
-                                            onClick={() => this.load()}
-                                            className="btn btn-secondary"
-                                            id="load-btn">load model
-                                        </button>
-                                    </div>
-                                </div>
 
                             </form>
 
-                            {model && 'toJSON' in model && (
-                                <form>
-                                    <label>Model Info</label>
-                                    <textarea
-                                        readOnly={true}
-                                        rows={5} className={'form-control'}
-                                        value={model.toJSON()}
-                                    >
-
-            </textarea>
-                                </form>
-                            )}
 
                         </div>
 
-                        <div className={'col-md-9'}>
+                    </div>
+                    <div className={'col-xs-6'}>
+                        <div className="canvases" id="lossCanvas"></div>
+                        <div className="canvases" id="accuracyCanvas"></div>
+                    </div>
 
-                            <div className={'row'}>
+                </div>
 
-                                <div className={'row p-3 m-3'}>
-                                    <div className="canvases" id="lossCanvas"></div>
-                                    <div className="canvases" id="accuracyCanvas"></div>
-                                </div>
-                                {0 < resultData.length && !training && <ResultTable
-                                    data={resultData}
-                                />}
+                <h3 className={'section-title'}>
+                    Results
 
-                                {!training && model && (
-                                    <div className={'row'}>
-                                        <div className={'col-sm-6'}>
-                                            <Predict
-                                                modelLoaded={Boolean(model)}
-                                                loadRandomPokemon={this.loadRandomPokemon}
-                                                handleChange={this.handleChange} params={params}
-                                                predict={this.predict}/>
-                                        </div>
-                                        <div className={'col-sm-6'}>
-                                            <PredictionResults
-                                                pokemonType={params.Type || "none"}
-                                                predictions={predictedTypes}/>
-                                        </div>
-                                    </div>
-                                )
-                                }
+                </h3>
+                {!isNaN(correctPredictions) && !isNaN(top5PredictionsPercent) && <div className={'row m-2'}>
+                    <h5 className={'float-right'}>
+                        Correct
+                        <span className={'badge badge-secondary m-1 mono'}>
+                                {correctPredictionsPercent + '%'}
+                            </span>
+                        Top 5
+                        <span className={'badge badge-secondary m-1 mono'}>
+                                 {top5PredictionsPercent + '%'}
+                            </span>
+                    </h5>
+                </div>
+                }
+                {0 < resultData.length && !training && <ResultTable
+                    data={resultData}
+                />}
 
+                {!training && model.model && (
+                    <div>
+                        <h3 className={'section-title'}>Predict Pokemon Type</h3>
+                        <div className={'row'}>
+                            <div className={'col m-1'}>
+                                <Predict
+                                    predictTestData={this.predictTestData}
+                                    modelLoaded={Boolean(model.model)}
+                                    loadRandomPokemon={this.loadRandomPokemon}
+                                    handleChange={this.handleChange} params={params}
+                                    predict={this.predict}/>
 
+                            </div>
+                            <div className={'col m-1'}>
+                                <PredictionResults
+                                    pokemonType={params.Type || "none"}
+                                    predictions={predictedTypes}/>
                             </div>
                         </div>
                     </div>
-                </div>
+                )
+                }
+
+
             </div>
-
-
         );
     }
 }

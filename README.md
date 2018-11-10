@@ -1,7 +1,5 @@
 # Pokemon Classification
 
-![screen](screen.png)
-
 Tensorflow to classify pokemon Type from HP, Total, Attack, Defense, Speed, Special Attack, Special Defense
 
 **Results**

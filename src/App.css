@@ -37,3 +37,27 @@
   width: 100px;
   padding-right: 1rem;
 }
+
+
+.section-title {
+
+  color: var(--gray);
+  border-left: 2px solid var(--dark);
+  letter-spacing: 0.17em;
+  font-weight: 500;
+  margin-top: 2em;
+  margin-bottom: 1em;
+  padding-left: 24px;
+  font-variant: small-caps;
+
+}
+
+
+label {
+  min-width: 200px
+}
+
+.form-number {
+
+  width: 200px;
+}

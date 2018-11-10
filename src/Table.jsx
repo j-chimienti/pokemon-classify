@@ -1,8 +1,6 @@
 import React from 'react';
 
 import ReactTable from 'react-table'
-
-
 export function Table({data}) {
 
     const ex = {
