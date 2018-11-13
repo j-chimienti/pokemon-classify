@@ -7,9 +7,10 @@ import 'popper.js/dist/popper.min'
 import 'bootstrap/dist/js/bootstrap.min'
 import AppRouter from "./Router";
 import * as tf from "@tensorflow/tfjs";
+import App from "./App";
 window.tf = tf;
 
-ReactDOM.render(<AppRouter/>, document.getElementById('root'));
+ReactDOM.render(<App/>, document.getElementById('root'));
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

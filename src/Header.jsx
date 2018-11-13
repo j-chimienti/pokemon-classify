@@ -33,12 +33,9 @@ function Header(props) {
                     Train new model by clicking train model (or load local model if saved)
                 </li>
                 <li>
-                    Note that while the model is training it periodically saves a copy of itself to local browser
-                    storage, this mean you can refresh the page and continue training from the last save point. If at
-                    any point you want to start training from scratch, click "Delete stored Model".
-                </li>
-                <li>
-                    Once the model has finished training you can click "Predict" to see the results of the predictions
+                    Once the model has finished training, it will predict the test data.
+                    You can click "Test" to generate new test data and predict
+
                 </li>
             </ul>
         </div>

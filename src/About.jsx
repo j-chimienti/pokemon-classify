@@ -1,81 +1,85 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Tree from "./Tree";
 
+import test from './MacBook.svg';
+import ModelGraphic from "./ModelGraphic";
 
 function About(props) {
     return (
         <div className={'container'}>
             <h2>About</h2>
 
+
             <div className={'row'}>
-                <div className={'row'}>
-                    <div>
-                        <div>
-                            Sequential model with 3 fully connected layers
-                            <ol>
+
+                {/*<ModelGraphic/>*/}
+
+                <div className={'col-sm-6'}>
+                    <h5>Sequential Model</h5>
+                    <ol>
+                        <li>
+                            <b>
+                                Input Layer (pokemon)
+
+                            </b>
+
+                            <ul>
                                 <li>
-                                    <b>
-                                        First Layer
-
-                                    </b>
-
-                                    <ul>
-                                        <li>
-                                            Input data: 18 units
-                                        </li>
-                                        <li>
-                                            Units: 256
-
-                                        </li>
-                                        <li>
-                                            Activation: Relu
-                                        </li>
-                                    </ul>
+                                    Input data: 18 units
+                                </li>
+                                <li>
+                                    Units: 256
 
                                 </li>
                                 <li>
+                                    Activation: Relu
+                                </li>
+                            </ul>
 
-                                    <b>
-                                        Second Layer
-                                    </b>
-                                    <ul>
-                                        <li>
-                                            Units: 256
+                        </li>
+                        <li>
 
-                                        </li>
-                                        <li>
-                                            Activation: Relu
-                                        </li>
-                                    </ul>
+                            <b>
+                                Hidden Layer
+                            </b>
+                            <ul>
+                                <li>
+                                    Units: 256
 
                                 </li>
                                 <li>
-
-                                    <b>
-                                        Third layer
-                                    </b>
-                                    <ul>
-                                        <li>
-                                            Units: 18
-                                            <small>
-                                                {' reduced to 18 pokemon types'}
-                                            </small>
-
-                                        </li>
-                                        <li>
-                                            Activation: none
-                                        </li>
-                                    </ul>
+                                    Activation: Relu
                                 </li>
-                            </ol>
-                        </div>
-                    </div>
+                            </ul>
 
-                    <Tree/>
+                        </li>
+                        <li>
+
+                            <b>
+                                Output layer
+                            </b>
+                            <ul>
+                                <li>
+                                    Units: 18
+                                    <small>
+                                        {' reduced to 18 pokemon types'}
+                                    </small>
+
+                                </li>
+                                <li>
+                                    Activation: none
+                                </li>
+                            </ul>
+                        </li>
+                    </ol>
                 </div>
-            </div>
 
+                <div className={'col-sm-6'}>
+                    <img src={test} className={'img-fluid'}/>
+                </div>
+
+
+            </div>
         </div>
     );
 }

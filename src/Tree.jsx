@@ -46,7 +46,7 @@ class Tree extends React.Component {
         const tree = Tree(heirarchalData);
 
         window.tree = tree;
-        const svg = d3.select('svg').append("g")
+        const svg = d3.select('#tree-graph').append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 
@@ -118,13 +118,23 @@ class Tree extends React.Component {
             .style('stroke', '#5f5f5f')
 
 
+
+
+
+
+
     }
+
+
+
 
 
     render() {
 
         return (
-            <svg width={width + margin.left + margin.right} height={height + margin.top + margin.bottom}>
+            <svg
+                id={'tree-graph'}
+                width={width + margin.left + margin.right} height={height + margin.top + margin.bottom}>
             </svg>
         );
     }

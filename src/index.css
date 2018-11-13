@@ -1,11 +1,5 @@
 @import '~bootstrap/dist/css/bootstrap.min.css';
-
 @import '~react-table/react-table.css';
-
-body {
-
-    background-color: var(--light);
-}
 
 h1, h2, h3, h4, h5, h6 {
 

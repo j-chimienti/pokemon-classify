@@ -31,15 +31,45 @@ function mapJsonToArray(p) {
 
 }
 
-function getName(_row) {
+function mapArrayToPokemon(_row) {
+
 
     const found = POKEMON_DATA.find(pokemon => {
 
-        return pokemon[1] == _row[0] && pokemon[2] == _row[1]
+        const [
+            Name,
+            Total,
+            HP,
+            Attack,
+            Defense,
+            Sp_Def,
+            Sp_Atk,
+            Speed,
+            type,
+        ] = pokemon;
+
+        const [
+            _Total,
+            _HP,
+            _Attack,
+            _Defense,
+            _Sp_Def,
+            _Sp_Atk,
+            _Speed,
+        ] = _row;
+
+
+        return Total == _Total &&
+            HP == _HP &&
+            Attack == _Attack &&
+            Defense == _Defense &&
+            Sp_Def == _Sp_Def &&
+            Sp_Atk == _Sp_Atk &&
+            Speed == _Speed;
     });
 
     if (found) {
-        return found[0]
+        return found
     }
     return 'n/a';
 }
@@ -170,7 +200,10 @@ class PokemonData {
 
 }
 
-class PokemonModel {
+
+const MODEL_SAVE_PATH = 'indexeddb://pokemon-classify';
+
+class SavablePokemonModel {
 
     params = {
         epochs: 50,
@@ -179,9 +212,23 @@ class PokemonModel {
     model;
 
 
-    constructor() {
+    constructor(model = null) {
 
         this.generateData();
+
+        if (model instanceof tf.Model) {
+
+            this.model = model;
+        }
+
+    }
+
+    static async checkStoredModelStatus() {
+
+        const models = await tf.io.listModels();
+
+        return models[MODEL_SAVE_PATH];
+
 
     }
 
@@ -203,43 +250,47 @@ class PokemonModel {
     createModel() {
 
         const {xTrain, POKEMON_TYPES} = this.data;
-        let model;
-        model = tf.sequential();
 
-        model.add(tf.layers.dense(
-            {units: 256, activation: 'relu', inputShape: [xTrain.shape[1]]}));
+        this.model = tf.sequential();
 
-        model.add(
-            tf.layers.dense(
-                {units: 256, activation: 'relu'}
-            )
-        );
-
-        model.add(tf.layers.dense({units: POKEMON_TYPES.length}));
-
-        this.model = model;
+        const layers = [
+            {units: 256, activation: 'relu', inputShape: [xTrain.shape[1]]},
+            {units: 256, activation: 'relu'},
+            {units: POKEMON_TYPES.length}
+        ];
+        layers.forEach(layer => this.model.add(tf.layers.dense(layer)));
 
     }
 
-    async load() {
+    static async load() {
 
 
-        const loadedModel = await tf.loadModel('indexeddb://my-model-1');
-        this.model = loadedModel;
+        const models = await tf.io.listModels();
+        if (MODEL_SAVE_PATH in models) {
 
-        return this;
+            console.log('Loading existing model...')
+            const loadedModel = await tf.loadModel(MODEL_SAVE_PATH);
+
+            console.log(`Loaded model from ${MODEL_SAVE_PATH}`);
+            return new PokemonTypeModel(loadedModel);
+        } else {
+
+            throw new Error('Unable to locate model');
+        }
 
     }
 
     async save() {
 
-        if (this.model == null) {
+        return await this.model.save(MODEL_SAVE_PATH);
 
-            throw new Error('Invalid Request');
-        }
-        const saveResults = await this.model.save(`indexeddb://my-model-1`);
+    }
 
-        return saveResults;
+    /**
+     * Remove the locally saved model from IndexedDB.
+     */
+    async removeModel() {
+        await tf.io.removeModel(MODEL_SAVE_PATH);
     }
 
     async train(params) {
@@ -282,53 +333,53 @@ class PokemonModel {
 }
 
 
-export class PokemonTypeModel extends PokemonModel {
+export class PokemonTypeModel extends SavablePokemonModel {
 
-
-    constructor() {
-
-        super();
-    }
 
     renderEvaluateTable(xData, yTrue, yPred, logits) {
 
         const rows = _.chunk(xData, 7);
 
-        const data = [];
+        let error = 0;
+        return rows
+            .filter((row, i) => {
 
-        for (let i = 0; i < rows.length; i++) {
+                const p = mapArrayToPokemon(row);
+                const actualType = p[p.length - 1];
+                const type = POKEMON_TYPES[yTrue[i]];
 
-            const row = rows[i];
-
-            const name = getName(row);
-
-            const type = POKEMON_TYPES[yTrue[i]];
-
-            const pred = POKEMON_TYPES[yPred[i]];
-            const exampleLogits = logits.slice(i * POKEMON_TYPES.length, (i + 1) * POKEMON_TYPES.length);
-
-            const top5 = tf.topk(exampleLogits, 5);
-            const _data = top5.indices.dataSync();
-
-            const types = Array.from(_data).map(item => POKEMON_TYPES[item]);
-
-            const strings = types.join(', ');
-
-            const span = strings;
-
-            data.push({
-                name,
-                type,
-                pred,
-                span,
-                types,
-                _data,
+                if (type !== actualType) {
+                    error++;
+                    console.error('error matching pokemon %s type, #error: %f, test: %f', p[0], error, rows.length)
+                }
+                return type === actualType;
             })
+            .map((row, i) => {
 
-        }
-        return {
-            data,
-        }
+
+                const p = mapArrayToPokemon(row);
+                const name = p[0];
+                const type = p[p.length - 1];
+
+                const pred = POKEMON_TYPES[yPred[i]];
+                const exampleLogits = logits.slice(i * POKEMON_TYPES.length, (i + 1) * POKEMON_TYPES.length);
+
+                const top5 = tf.topk(exampleLogits, 5);
+                const _data = top5.indices.dataSync();
+
+                const types = Array.from(_data).map(item => POKEMON_TYPES[item]);
+
+                return {
+                    name,
+                    type,
+                    values: top5.values.dataSync(),
+                    pred,
+                    types,
+                    _data,
+                }
+
+            });
+
 
     }
 
@@ -349,9 +400,9 @@ export class PokemonTypeModel extends PokemonModel {
                 xData, yTrue, yPred.dataSync(), logits);
 
 
-            const resultData = result.data.map(d => {
+            const resultData = result.map(d => {
 
-                const foundP = this.data.pokemon.find(_d => _d.Name === d.name);
+                const foundP = this.data.pokemon.find(poke => poke.Name === d.name);
 
                 if (foundP) {
 
@@ -384,6 +435,7 @@ export class PokemonTypeModel extends PokemonModel {
 
 
 }
+
 
 
 
