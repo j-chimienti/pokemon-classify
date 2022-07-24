@@ -1,8 +1,7 @@
 {
   "name": "pokemon-classify",
   "version": "0.1.0",
-  "private": true,
-  "homepage": "https://j-chimienti.github.io/pokemon-classify/",
+  "private": false,
   "dependencies": {
     "@tensorflow/tfjs": "^0.13.3",
     "bootstrap": "^4.1.3",
